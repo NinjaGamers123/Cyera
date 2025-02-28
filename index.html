@@ -3,14 +3,14 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity Web Player | CyeraEndless</title>
+    <title>Unity Web Player | SampleEndlessRunnerGame</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
     <script type="module">
       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-app.js";
-      import { getAuth, createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
-      import { getFirestore, setDoc, getDoc, doc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
-  
+      import { getAuth, createUserWithEmailAndPassword, updateProfile, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-auth.js";
+      import { getFirestore, setDoc, getDoc, doc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.3.1/firebase-firestore.js";
+    
       const firebaseConfig = {
         apiKey: "AIzaSyABw5EIum3ExkmzciO-6w-psTEH6YKBoUw",
         authDomain: "cyeraendless.firebaseapp.com",
@@ -19,12 +19,14 @@
         messagingSenderId: "380895477284",
         appId: "1:380895477284:web:b8a009a505dbcb8d61e2b1"
       };
-  
+    
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
       const db = getFirestore(app);
-  
+    
       console.log("Firebase Initialized:", app);
+
+      // Check login state on page load
       window.checkLoginState = function() {
         onAuthStateChanged(auth, async (user) => {
           if (user) {
@@ -39,7 +41,7 @@
               }));
             } else {
               console.error("No user data found for logged-in user!");
-              SendMessageToUnity("LoginManager", "OnLoginError", "User data not found.");
+              // SendMessageToUnity("LoginManager", "OnLoginError", "User data not found.");
             }
           } else {
             console.log("No user logged in on page load.");
@@ -87,6 +89,9 @@
           });
 
           console.log("User signed up and data saved:", user);
+
+          login(username , password);
+          
           SendMessageToUnity("LoginManager", "OnSignUpSuccess", JSON.stringify({
             userId: user.uid,
             playerData: JSON.stringify(firebaseData)
@@ -225,11 +230,11 @@
       }
 
       // Trigger login state check after page load
-      document.addEventListener("DOMContentLoaded", () => {
-        setTimeout(checkLoginState, 1000); // Delay to ensure Unity is initialized
-      });
-  
-  /// This is Share code ///
+      // document.addEventListener("DOMContentLoaded", () => {
+      //   setTimeout(checkLoginState, 10000); // Delay to ensure Unity is initialized
+      // });
+
+      /// This is Share code ///
       window.uploadImageAndShare = function (base64Image, platform) {
         var formData = new FormData();
         formData.append("file", base64ToBlob(base64Image));
@@ -281,7 +286,6 @@
           return null; // Return null if decoding fails
       }
   };
-  
     </script>
   </head>
   <body>
@@ -297,18 +301,12 @@
       <div id="unity-footer">
         <div id="unity-logo-title-footer"></div>
         <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">CyeraEndless</div>
+        <div id="unity-build-title">SampleEndlessRunnerGame</div>
       </div>
     </div>
     <script>
       var canvas = document.querySelector("#unity-canvas");
 
-      // Shows a temporary message banner/ribbon for a few seconds, or
-      // a permanent error message on top of the canvas if type=='error'.
-      // If type=='warning', a yellow highlight color is used.
-      // Modify or remove this function to customize the visually presented
-      // way that non-critical warnings and error messages are presented to the
-      // user.
       function unityShowBanner(msg, type) {
         var warningBanner = document.querySelector("#unity-warning");
         function updateBannerVisibility() {
@@ -329,52 +327,27 @@
       }
 
       var buildUrl = "Build";
-      var loaderUrl = buildUrl + "/3eb3d0398b66fa49f75d14eca7568ee7.loader.js";
+      var loaderUrl = buildUrl + "/Cyera.loader.js";
       var config = {
         arguments: [],
-        dataUrl: buildUrl + "/8ecc91242d37c173279eb4df7ca0d35a.data",
-        frameworkUrl: buildUrl + "/bec2890ec703dba9bfb52f8a0daddf52.framework.js",
-        codeUrl: buildUrl + "/693f8a7bdbe84c23229a0fb0ceaabd1d.wasm",
+        dataUrl: buildUrl + "/Cyera.data.gz",
+        frameworkUrl: buildUrl + "/Cyera.framework.js.gz",
+        codeUrl: buildUrl + "/Cyera.wasm.gz",
         streamingAssetsUrl: "StreamingAssets",
         companyName: "DefaultCompany",
-        productName: "CyeraEndless",
+        productName: "SampleEndlessRunnerGame",
         productVersion: "1.0",
         showBanner: unityShowBanner,
       };
 
-      // By default, Unity keeps WebGL canvas render target size matched with
-      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
-      // Set this to false if you want to decouple this synchronization from
-      // happening inside the engine, and you would instead like to size up
-      // the canvas DOM size and WebGL render target sizes yourself.
-      // config.matchWebGLToCanvasSize = false;
-
-      // If you would like all file writes inside Unity Application.persistentDataPath
-      // directory to automatically persist so that the contents are remembered when
-      // the user revisits the site the next time, uncomment the following line:
-      // config.autoSyncPersistentDataPath = true;
-      // This autosyncing is currently not the default behavior to avoid regressing
-      // existing user projects that might rely on the earlier manual
-      // JS_FileSystem_Sync() behavior, but in future Unity version, this will be
-      // expected to change.
-
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-        // Mobile device style: fill the whole browser client area with the game canvas:
-
         var meta = document.createElement('meta');
         meta.name = 'viewport';
         meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
         document.getElementsByTagName('head')[0].appendChild(meta);
         document.querySelector("#unity-container").className = "unity-mobile";
         canvas.className = "unity-mobile";
-
-        // To lower canvas resolution on mobile devices to gain some
-        // performance, uncomment the following line:
-        // config.devicePixelRatio = 1;
-
-
       } else {
-        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
         canvas.style.width = "1280px";
         canvas.style.height = "720px";
       }
@@ -386,20 +359,21 @@
       script.onload = () => {
         createUnityInstance(canvas, config, (progress) => {
           document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
-              }).then((Instance) => {
-                document.querySelector("#unity-loading-bar").style.display = "none";
-                window.unityInstance=Instance;
-                document.querySelector("#unity-fullscreen-button").onclick = () => {
-                  Instance.SetFullscreen(1);
-                };
-
-              }).catch((message) => {
-                alert(message);
-              });
-            };
+        }).then((instance) => {
+          document.querySelector("#unity-loading-bar").style.display = "none";
+          window.unityInstance = instance;
+          console.log("Unity instance loaded:", window.unityInstance);
+          document.querySelector("#unity-fullscreen-button").onclick = () => {
+            instance.SetFullscreen(1);
+          };
+          // Check login state again after Unity is fully loaded
+          checkLoginState();
+        }).catch((message) => {
+          alert(message);
+        });
+      };
 
       document.body.appendChild(script);
-
     </script>
   </body>
 </html>
